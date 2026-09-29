@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS PIPELINE_RUN_LOG ( 
-   run_id INTEGER, 
-   log_id INTEGER, 
+   run_id INTEGER NOT NULL, 
+   log_id SERIAL PRIMARY KEY, 
    log_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
    action VARCHAR(100), 
    row_count BIGINT, 
