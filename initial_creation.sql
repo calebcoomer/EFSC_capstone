@@ -1,6 +1,40 @@
-DROP TABLE IF EXISTS BREVARD_MASTER_RAW; 
+CREATE TABLE IF NOT EXISTS PIPELINE_RUN_LOG ( 
+   run_id INTEGER, 
+   log_id INTEGER, 
+   log_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+   action VARCHAR(100), 
+   row_count BIGINT, 
+   message TEXT 
+); 
+
+CREATE TEMP TABLE CURRENT_LOG AS
+	SELECT COALESCE(MAX(run_id), 0) + 1 AS run_id
+	FROM PIPELINE_RUN_LOG
+;
+
+
+DROP TABLE IF EXISTS BREVARD_MASTER_RAW;
+INSERT INTO PIPELINE_RUN_LOG 
+    		(run_id, action, row_count, message) 
+  VALUES 
+    		(
+			(SELECT run_id FROM CURRENT_LOG),
+        	'BREVARD_MASTER_RAW dropped', 
+        	(0), 
+        	'Table dropped successfully' 
+    		); 
+
 
 DROP TABLE IF EXISTS BREVARD_ARREST; 
+INSERT INTO PIPELINE_RUN_LOG 
+    		(run_id, action, row_count, message) 
+  VALUES 
+    		(
+			(SELECT run_id FROM CURRENT_LOG),
+        	'BREVARD_ARREST dropped', 
+        	(0), 
+        	'Table dropped successfully' 
+    		); 
 
 CREATE TABLE BREVARD_MASTER_RAW AS 
 SELECT arrest_date, 
@@ -19,10 +53,10 @@ INSERT INTO PIPELINE_RUN_LOG
     		(run_id, action, row_count, message) 
   VALUES 
     		(
-			  1,
-        'BREVARD_MASTER_RAW creation', 
-        (SELECT COUNT(*) FROM BREVARD_MASTER_RAW), 
-        'Table created successfully' 
+			(SELECT run_id FROM CURRENT_LOG),
+        	'BREVARD_MASTER_RAW creation', 
+        	(SELECT COUNT(*) FROM BREVARD_MASTER_RAW), 
+        	'Table created successfully' 
     		); 
 
 			
@@ -33,10 +67,10 @@ INSERT INTO PIPELINE_RUN_LOG
     		(run_id, action, row_count, message) 
   VALUES 
     		(
-			  1,
-        'BREVARD_ARREST creation', 
-        (SELECT COUNT(*) FROM BREVARD_ARREST), 
-        'Table created successfully' 
+			(SELECT run_id FROM CURRENT_LOG),
+        	'BREVARD_ARREST creation', 
+        	(SELECT COUNT(*) FROM BREVARD_ARREST), 
+        	'Table created successfully' 
     		); 
 
 
@@ -47,10 +81,10 @@ INSERT INTO PIPELINE_RUN_LOG
     		(run_id, action, row_count, message) 
   VALUES 
     		(
-			  1,
-        'BREVARD_ARREST typing', 
-        (SELECT COUNT(*) FROM BREVARD_ARREST), 
-        'Arrest_date field converted to DATE type' 
+			(SELECT run_id FROM CURRENT_LOG),
+        	'BREVARD_ARREST typing', 
+        	(SELECT COUNT(*) FROM BREVARD_ARREST), 
+        	'Arrest_date field converted to DATE type' 
     		); 
 
 		
@@ -60,10 +94,10 @@ INSERT INTO PIPELINE_RUN_LOG
     		(run_id, action, row_count, message) 
   VALUES 
     		(
-			  1,
-        'BREVARD_ARREST normalization', 
-        (SELECT COUNT(*) FROM BREVARD_ARREST), 
-        'Statutes converted to uppercase' 
+			(SELECT run_id FROM CURRENT_LOG),
+        	'BREVARD_ARREST normalization', 
+        	(SELECT COUNT(*) FROM BREVARD_ARREST), 
+        	'Statutes converted to uppercase' 
     		); 
 
 
@@ -73,35 +107,35 @@ INSERT INTO PIPELINE_RUN_LOG
     		(run_id, action, row_count, message) 
   VALUES 
     		(
-			  1,
-        'BREVARD_ARREST normalization', 
-        (SELECT COUNT(*) FROM BREVARD_ARREST), 
-        'Source_file sliced down to two digits' 
+			(SELECT run_id FROM CURRENT_LOG),
+        	'BREVARD_ARREST normalization', 
+        	(SELECT COUNT(*) FROM BREVARD_ARREST), 
+        	'Source_file sliced down to two digits' 
     		);
 
 			
 ALTER TABLE BREVARD_ARREST  
 ALTER COLUMN source_file TYPE INTEGER  
-  USING source_file::INTEGER, 
+	USING source_file::INTEGER, 
 ALTER COLUMN source_row TYPE INTEGER  
 	USING source_row::INTEGER;
 INSERT INTO PIPELINE_RUN_LOG 
     		(run_id, action, row_count, message) 
   VALUES 
     		(
-			  1,
-        'BREVARD_ARREST typing', 
-        (SELECT COUNT(*) FROM BREVARD_ARREST), 
-        'Source_file field converted to INT type' 
+			(SELECT run_id FROM CURRENT_LOG),
+        	'BREVARD_ARREST typing', 
+        	(SELECT COUNT(*) FROM BREVARD_ARREST), 
+        	'Source_file field converted to INT type' 
     		);
 INSERT INTO PIPELINE_RUN_LOG 
     		(run_id, action, row_count, message) 
   VALUES 
     		(
-			  1,
-        'BREVARD_ARREST typing', 
-        (SELECT COUNT(*) FROM BREVARD_ARREST), 
-        'Source_row field converted to INT type' 
+			(SELECT run_id FROM CURRENT_LOG),
+        	'BREVARD_ARREST typing', 
+        	(SELECT COUNT(*) FROM BREVARD_ARREST), 
+        	'Source_row field converted to INT type' 
     		);
 
 
@@ -112,8 +146,11 @@ INSERT INTO PIPELINE_RUN_LOG
     		(run_id, action, row_count, message) 
   VALUES 
     		(
-			  1,
-        'BREVARD_ARREST key assignment', 
-       	(SELECT COUNT(*) FROM BREVARD_ARREST), 
-       	'Composite key created, source_file and source_row' 
-    		);	
+			(SELECT run_id FROM CURRENT_LOG),
+        	'BREVARD_ARREST key assignment', 
+        	(SELECT COUNT(*) FROM BREVARD_ARREST), 
+        	'Composite key created, source_file and source_row' 
+    		);
+
+
+DROP TABLE CURRENT_LOG;
