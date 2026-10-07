@@ -19,7 +19,7 @@ for file in input_folder.glob("*.csv"):
             writer.writeheader()
 
             for row_number, row in enumerate(reader, start=1):
-                row["source_file"] = file.name
+                row["source_file"] = int(file.stem[-2:])
                 row["source_row"] = row_number
 
                 writer.writerow(row)
